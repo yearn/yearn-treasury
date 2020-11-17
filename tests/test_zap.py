@@ -11,9 +11,10 @@ def test_swap(whale, zap, token_out, token_in):
     before = token_out.balanceOf(whale)
     token_in.approve(zap, token_in.balanceOf(whale))
     amount_in = token_in.balanceOf(whale)
-    tx = zap.swap(token_in, token_out, amount_in)
+    zap.swap(token_in, token_out, amount_in)
+    amount_out = token_out.balanceOf(whale) - before
     print(
         f"swap {amount_in / 10 ** token_in.decimals()} {token_in.symbol()} "
-        f"for {tx.return_value / 10 ** token_out.decimals()} {token_out.symbol()}"
+        f"for {amount_out / 10 ** token_out.decimals()} {token_out.symbol()}"
     )
-    assert token_out.balanceOf(whale) > before
+    assert amount_out > 0

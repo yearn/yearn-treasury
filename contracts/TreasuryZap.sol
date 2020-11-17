@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL
 pragma solidity=0.6.12;
 
 import "@openzeppelinV3/contracts/token/ERC20/IERC20.sol";
@@ -45,7 +46,7 @@ interface Zapper {
 }
 
 
-contract TreasuryAdapter {
+contract TreasuryZap {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -66,6 +67,7 @@ contract TreasuryAdapter {
     }
 
     function swap(address token_in, address token_out, uint amount_in) public returns (uint amount_out) {
+        IERC20(token_in).safeTransferFrom(msg.sender, address(this), amount_in);
         address pool_in = token_to_curve_pool(token_in);
         if (pool_in != address(0)) {
             amount_out = swap_curve(token_in, token_out, amount_in);
@@ -83,7 +85,7 @@ contract TreasuryAdapter {
         IERC20(token_in).safeApprove(curve_zap_out, amount_in);
         address pool_in = token_to_curve_pool(token_in);
         amount_out = Zapper(curve_zap_out).ZapOut(
-            payable(address(this)),
+            payable(msg.sender),
             pool_in,
             amount_in,
             token_out,
@@ -108,7 +110,7 @@ contract TreasuryAdapter {
             amount_in,
             0,
             path,
-            address(this),
+            msg.sender,
             block.timestamp
         );
         amount_out = amounts[amounts.length - 1];

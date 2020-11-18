@@ -20,17 +20,6 @@ interface Uniswap {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
     
-    function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
-
     function getAmountsOut(uint amountIn, address[] memory path) external view returns (uint[] memory amounts);
 }
 
@@ -53,6 +42,7 @@ contract TreasuryZap {
 
     address constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant uniswap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address constant sushiswap = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
     address constant curve_registry = 0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c;
     address constant curve_zap_out = 0xA3061Cf6aC1423c6F40917AD49602cBA187181Dc;
     mapping(address => address) curve_deposit;
@@ -93,8 +83,7 @@ contract TreasuryZap {
         );
     }
 
-    function swap_uniswap(address token_in, address token_out, uint amount_in) public returns (uint amount_out) {
-        if (token_in == token_out) return amount_in;
+    function get_path(address token_in, address token_out) public returns (address[] memory path) {
         bool is_weth = token_in == weth || token_out == weth;
         address[] memory path = new address[](is_weth ? 2 : 3);
         path[0] = token_in;
@@ -104,15 +93,23 @@ contract TreasuryZap {
             path[1] = weth;
             path[2] = token_out;
         }
-        if (IERC20(token_in).allowance(address(this), uniswap) < amount_in)
-            IERC20(token_in).safeApprove(uniswap, type(uint256).max);
-        uint[] memory amounts = Uniswap(uniswap).swapExactTokensForTokens(
+        return path;
+    }
+
+    function swap_uniswap(address token_in, address token_out, uint amount_in) public returns (uint amount_out) {
+        if (token_in == token_out) return amount_in;
+        address[] memory path = get_path(token_in, token_out);
+        uint _uni = Uniswap(uniswap).getAmountsOut(amount_in, path)[path.length - 1];
+        uint _sushi = Uniswap(sushiswap).getAmountsOut(amount_in, path)[path.length - 1];
+        address router = _uni > _sushi ? uniswap : sushiswap;
+        if (IERC20(token_in).allowance(address(this), router) < amount_in)
+            IERC20(token_in).safeApprove(router, type(uint256).max);
+        return Uniswap(router).swapExactTokensForTokens(
             amount_in,
             0,
             path,
             msg.sender,
             block.timestamp
-        );
-        amount_out = amounts[amounts.length - 1];
+        )[path.length - 1];
     }
 }

@@ -55,12 +55,12 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
 
     // Non-Curve Tokens
     function addToken(address _token) external onlyGovernor {
-        require(_token != address(0));
+        require(_token != address(0), 'token-already-added');
         _addProtocolToken(_token);
     }
 
     function changePeriod(uint256 _period) external onlyGovernor {
-        require(_period > 0);
+        require(_period > 0, 'period-not-0');
         period = _period;
     }
 
@@ -86,7 +86,7 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
         uint256 blocks = block.number.sub(lastSwapAt);
         require(blocks > 0, 'TreasuryZap::getSpendage:already-swapped-this-block');
         if (blocks >= period) {
-            return balance;
+            blocks = 1;
         }
         return balance.mul(blocks).div(period);
     }
@@ -116,7 +116,7 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
         // pool = CurveRegistry(curve_registry).get_pool_from_lp_token(_token);
         address _curvePool = curve_deposit[_token];
         _amountOut = Zapper(curve_zap_out).ZapOut(
-            payable(msg.sender),
+            payable(address(this)),
             _curvePool,
             _amount,
             want,

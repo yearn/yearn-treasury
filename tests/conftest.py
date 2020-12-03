@@ -34,7 +34,7 @@ curve_pools_in = {
 
 tokens_out = {
     "YFI": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
-    "DAI": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+    # "DAI": "0x6B175474E89094C44Da98b954EedeAC495271d0F", // only swap to YFI
 }
 
 
@@ -52,8 +52,20 @@ def governance_swaps(interface, swap_owner):
     return interface.IGovernanceSwap("0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc", owner=swap_owner)
 
 @pytest.fixture
+def uniswap_handler(interface, swap_owner):
+    return interface.IUniswapDexHandler("0x293aC14CB38E2443d9c95C185A25b8EA6f2f18A2", owner=swap_owner)
+
+@pytest.fixture
+def sushiswap_handler(interface, swap_owner):
+    return interface.IUniswapDexHandler("0xfB5Ab2909A455934214A7b84C802fbFBcE7c4e9F", owner=swap_owner)
+
+@pytest.fixture
 def whale(accounts):
     return accounts.at("0x93A62dA5a14C80f265DAbC077fCEE437B1a0Efde", force=True)
+
+@pytest.fixture()
+def weth(interface):
+    return interface.ERC20("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 @pytest.fixture
 def zap(TreasuryZap, whale, governance_swaps):
@@ -61,12 +73,30 @@ def zap(TreasuryZap, whale, governance_swaps):
 
 
 @pytest.fixture(params=tokens_in)
-def token_in(interface, request, whale):
-    return interface.ERC20(tokens_in[request.param], owner=whale)
+def token_in(interface, zap, weth, token_out, governance_swaps, sushiswap_handler, request, whale):
+    token_in = interface.ERC20(tokens_in[request.param], owner=whale)
+    zap.addToken(token_in)
+    if token_in == token_out:
+        return token_in
+    # setup governance swap default path
+    path = [token_in, token_out] if token_in == weth else [token_in, weth, token_out]
+    defaultSwapData = sushiswap_handler.customSwapData(0, 0, path, whale, 0)
+    governance_swaps.setPairDefaults(token_in, token_out, sushiswap_handler.dex(), defaultSwapData)
+
+    return token_in
 
 @pytest.fixture(params=curve_tokens_in)
-def curve_token_in(interface, request, whale):
-    return interface.ERC20(curve_tokens_in[request.param], owner=whale)
+def curve_token_in(interface, zap, weth, token_out, governance_swaps, sushiswap_handler, request, whale):
+    curve_token_in = interface.ERC20(curve_tokens_in[request.param], owner=whale)
+    zap.addCurveToken(curve_token_in, curve_pools_in[request.param])
+    if curve_token_in == token_out:
+        return curve_token_in
+    # setup governance swap default path
+    path = [curve_token_in, token_out] if curve_token_in == weth else [curve_token_in, weth, token_out]
+    defaultSwapData = sushiswap_handler.customSwapData(0, 0, path, whale, 0)
+    governance_swaps.setPairDefaults(curve_token_in, token_out, sushiswap_handler.dex(), defaultSwapData)
+
+    return curve_token_in
 
 @pytest.fixture(params=tokens_out)
 def token_out(interface, request):

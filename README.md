@@ -5,6 +5,13 @@ As the rewards address of v1 strategies, `TreasuryZap` receives a bunch of diffe
 
 [governance-swaps](https://github.com/lbertenasco/safe-smart-swap): [`0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc`](https://etherscan.io/address/0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc#code)
 
+## run tests:
+
+```sh
+export WEB3_INFURA_PROJECT_ID=YourInfuraID
+brownie test
+```
+
 ## Contracts:
 
 ### [`TreasuryZap.sol`](./contracts/TreasuryZap.sol)

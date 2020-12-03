@@ -4,8 +4,8 @@ pragma solidity >=0.6.8;
 
 interface IDexHandler {
     function isDexHandler() external view returns(bool);
+    function dex() external view returns(address _dex);
     function swap(bytes calldata _data, uint256 _amount) external returns(uint256 _amountOut);
     function swapData() external pure returns(bytes memory);
-    function customSwapData(uint256 _amount, uint256 _min, address[] calldata _path, address _to, uint256 _expire) external pure returns (bytes memory);
     function getAmountOut(bytes calldata _data, uint256 _amount) external view returns(uint256 _amountOut);
 }

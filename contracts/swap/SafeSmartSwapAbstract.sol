@@ -5,7 +5,7 @@ import "@openzeppelinV3/contracts/math/SafeMath.sol";
 import "@openzeppelinV3/contracts/token/ERC20/IERC20.sol";
 import '@openzeppelinV3/contracts/token/ERC20/SafeERC20.sol';
 
-import "../../interfaces/swap/IDexHandler.sol";
+import "../../interfaces/dex-handlers/IDexHandler.sol";
 import "../../interfaces/swap/IGovernanceSwap.sol";
 
 /*
@@ -74,7 +74,8 @@ contract SafeSmartSwap {
     }
 
     function _approve(address _in, address _handler, uint256 _amount) internal {
-        IERC20(_in).safeApprove(_handler, _amount);
+        IERC20(_in).approve(_handler, 0);
+        IERC20(_in).approve(_handler, _amount);
     }
 
 }

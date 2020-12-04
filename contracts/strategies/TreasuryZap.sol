@@ -8,7 +8,9 @@ import "@openzeppelinV3/contracts/token/ERC20/SafeERC20.sol";
 import '@openzeppelinV3/contracts/utils/EnumerableSet.sol';
 
 import "../../interfaces/utils/IZapper.sol";
+import "../../interfaces/curve/ICurveRegistry.sol";
 
+import "../utils/TransferHelper.sol";
 import "../utils/UtilsReady.sol";
 import "../swap/SafeSmartSwapAbstract.sol";
 
@@ -30,7 +32,8 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
 
     // swap variables
     uint256 public period = 6500 * 7; // 1 week
-    uint256 public lastSwapAt;
+    mapping(address => uint256) public lastSwapAt;
+
 
 
     constructor(address _governanceSwap) public UtilsReady() SafeSmartSwap(_governanceSwap) {
@@ -39,7 +42,7 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
 
 
     // Curve Tokens
-    function addCurveToken(address _token, address _curveContract) external onlyGovernor {
+    function addCurveToken(address _token, address _curveContract) public onlyGovernor {
         require(_token != address(0));
         require(_curveContract != address(0));
         require(curve_deposit[_token] == address(0), 'TreasuryZap::addCurveToken:token-already-added');
@@ -55,7 +58,11 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
 
     // Non-Curve Tokens
     function addToken(address _token) external onlyGovernor {
-        require(_token != address(0), 'token-already-added');
+        require(_token != address(0), 'token-not-0');
+        address _curvePool = ICurveRegistry(curve_registry).get_pool_from_lp_token(_token);
+        if (_curvePool != address(0)) {
+            return addCurveToken(_token, _curvePool);
+        }
         _addProtocolToken(_token);
     }
 
@@ -83,7 +90,7 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
     function getSpendage(address _token) public view returns (uint256 _amount) {
         require(protocolTokens.contains(_token), 'TreasuryZap::getSpendage:token-not-in-protocol');
         uint256 balance = IERC20(_token).balanceOf(address(this));
-        uint256 blocks = block.number.sub(lastSwapAt);
+        uint256 blocks = block.number.sub(lastSwapAt[_token]);
         require(blocks > 0, 'TreasuryZap::getSpendage:already-swapped-this-block');
         if (blocks >= period) {
             blocks = 1;
@@ -100,18 +107,19 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
         } else {
             _amountOut = _swap(_amount, _token, want);
         }
-        // TODO Report swap?
+        _reportSwap(_token, _amount, _amountOut);
     }
 
     function customSwap(address _token, address _dex, bytes calldata _data) external notPaused onlyKeeper returns (uint256 _amountOut) {
         uint256 _amount = getSpendage(_token);
         _amountOut = _swap(_amount, _token, want, _dex, _data);
-        // TODO Report swap?
+        _reportSwap(_token, _amount, _amountOut);
     }
 
 
-    function _curveSwap(uint _amount, address _token, address want) internal returns (uint _amountOut) {
-        IERC20(_token).safeApprove(curve_zap_out, _amount);
+    function _curveSwap(uint256 _amount, address _token, address want) internal returns (uint256 _amountOut) {
+        // IERC20(_token).safeApprove(curve_zap_out, 0);
+        TransferHelper.safeApprove(_token, curve_zap_out, _amount);
         // Why is this required? (we sould add any extra curve token to avoid having it treated as dust)
         // pool = CurveRegistry(curve_registry).get_pool_from_lp_token(_token);
         address _curvePool = curve_deposit[_token];
@@ -123,14 +131,19 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
             0
         );
     }
-    
+
+    function _reportSwap(address _token, uint256 _amount, uint256 _amountOut) internal {
+        lastSwapAt[_token] = block.number;
+        // TODO Report swap with event
+    }
+
     // TODO 
     /**
         exit
 
      */
 
-    // function swap(address token_in, address token_out, uint amount_in) public returns (uint amount_out) {
+    // function swap(address token_in, address token_out, uint256 amount_in) public returns (uint256 amount_out) {
     //     IERC20(token_in).safeTransferFrom(msg.sender, address(this), amount_in);
     //     address pool_in = token_to_curve_pool(token_in);
     //     if (pool_in != address(0)) {
@@ -154,11 +167,11 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
     //     return path;
     // }
 
-    // function swap_uniswap(address token_in, address token_out, uint amount_in) public returns (uint amount_out) {
+    // function swap_uniswap(address token_in, address token_out, uint256 amount_in) public returns (uint256 amount_out) {
     //     if (token_in == token_out) return amount_in;
     //     address[] memory path = get_path(token_in, token_out);
-    //     uint _uni = Uniswap(uniswap).getAmountsOut(amount_in, path)[path.length - 1];
-    //     uint _sushi = Uniswap(sushiswap).getAmountsOut(amount_in, path)[path.length - 1];
+    //     uint256 _uni = Uniswap(uniswap).getAmountsOut(amount_in, path)[path.length - 1];
+    //     uint256 _sushi = Uniswap(sushiswap).getAmountsOut(amount_in, path)[path.length - 1];
     //     address router = _uni > _sushi ? uniswap : sushiswap;
     //     if (IERC20(token_in).allowance(address(this), router) < amount_in)
     //         IERC20(token_in).safeApprove(router, type(uint256).max);

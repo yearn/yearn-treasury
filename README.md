@@ -3,14 +3,33 @@
 As the rewards address of v1 strategies, `TreasuryZap` receives a bunch of different tokens and it swaps them to YFI, trying to avoid slippage as much as possible by partially swappping the rewards and allowing the keepers to set custom routes via governance-swaps.
 
 
-[governance-swaps](https://github.com/lbertenasco/safe-smart-swap): [`0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc`](https://etherscan.io/address/0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc#code)
+- [governance-swaps](https://github.com/lbertenasco/safe-smart-swap): [`0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc`](https://etherscan.io/address/0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc#code)
 
 ## run tests:
 
 ```sh
 export WEB3_INFURA_PROJECT_ID=YourInfuraID
-brownie test
+brownie test -v -s
 ```
+
+
+## How it works:
+
+- Rewards are transfered to `TreasuryZap` (can be modified to an `approve -> transferFrom` logic if needed)
+- Keeper calls `TreasuryZap.swap(address _token)` or `TreasuryZap.customSwap(address _token, address _dex, bytes calldata _data)`
+- `TreasuryZap` uses `getSpendage` to get the `_amount` of `_token` available to be swapped, depending on the current `block.number`, `lastSwapAt[_token]` and `period`
+- `TreasuryZap` `swaps` the `_amount` of `_token` for `want` via `SafeSmartSwapAbstract` which uses `governance-swaps`
+- `SafeSmartSwapAbstract` calls `governance-swaps` to get the default `dexHandler` and `data` for the `_token -> want` pair
+- `SafeSmartSwapAbstract` approves `dexHandler` to spend `_amount` of  `_token`
+- `SafeSmartSwapAbstract` executes `dexHandler.swap(_data, _amount)`
+- `TreasuryZap` receives the `amountOut` of `want`
+- `TreasuryZap` updates the `lastSwapAt[_token]` and reports the swap
+
+
+## Improvements:
+
+- fix tests (not resetting the fork)
+
 
 ## Contracts:
 
@@ -20,7 +39,7 @@ brownie test
     - add curve zap to governance-swaps
     - add tokens_in -> yfi(want) default paths to governance-swaps
 
-Curve Tokens and Pools:
+Curve Tokens and Pools: (not sure why we are not using `CurveRegistry.get_pool_from_lp_token(_token)` here, are those better default pools?)
 ```js
 curve_deposit[0x845838DF265Dcd2c412A1Dc9e959c7d08537f8a2] = 0xeB21209ae4C2c9FF2a86ACA31E123764A3B6Bc06; // compound
 curve_deposit[0x9fC689CCaDa600B6DF723D9E47D84d76664a1F23] = 0xac795D2c97e60DF6a99ff1c814727302fD747a80; // usdt

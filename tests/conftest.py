@@ -52,12 +52,20 @@ def governance_swaps(interface, swap_owner):
     return interface.IGovernanceSwap("0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc", owner=swap_owner)
 
 @pytest.fixture
-def uniswap_handler(interface, swap_owner):
-    return interface.IUniswapDexHandler("0x293aC14CB38E2443d9c95C185A25b8EA6f2f18A2", owner=swap_owner)
+def uniswap_handler(UniswapV2DexHandler, interface, governance_swaps, swap_owner):
+    uni_handler = interface.IUniswapDexHandler("0x293aC14CB38E2443d9c95C185A25b8EA6f2f18A2", owner=swap_owner)
+    uni_handler_new = UniswapV2DexHandler.deploy(uni_handler.dex(), {"from": swap_owner})
+    governance_swaps.removeDexHandler(uni_handler_new.dex())
+    governance_swaps.addDexHandler(uni_handler_new.dex(), uni_handler_new)
+    return uni_handler_new
 
 @pytest.fixture
-def sushiswap_handler(interface, swap_owner):
-    return interface.IUniswapDexHandler("0xfB5Ab2909A455934214A7b84C802fbFBcE7c4e9F", owner=swap_owner)
+def sushiswap_handler(UniswapV2DexHandler, interface, governance_swaps, swap_owner):
+    sushi_handler = interface.IUniswapDexHandler("0xfB5Ab2909A455934214A7b84C802fbFBcE7c4e9F", owner=swap_owner)
+    sushi_handler_new = UniswapV2DexHandler.deploy(sushi_handler.dex(), {"from": swap_owner})
+    governance_swaps.removeDexHandler(sushi_handler_new.dex())
+    governance_swaps.addDexHandler(sushi_handler_new.dex(), sushi_handler_new)
+    return sushi_handler_new
 
 @pytest.fixture
 def whale(accounts):

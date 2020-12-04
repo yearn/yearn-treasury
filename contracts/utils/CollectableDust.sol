@@ -8,6 +8,7 @@ import '@openzeppelinV3/contracts/utils/EnumerableSet.sol';
 import '@openzeppelinV3/contracts/token/ERC20/IERC20.sol';
 
 import '../../interfaces/utils/ICollectableDust.sol';
+import "./TransferHelper.sol";
 
 abstract
 contract CollectableDust is ICollectableDust {
@@ -38,7 +39,7 @@ contract CollectableDust is ICollectableDust {
     if (_token == ETH_ADDRESS) {
       payable(_to).transfer(_amount);
     } else {
-      IERC20(_token).transfer(_to, _amount);
+      TransferHelper.safeTransfer(_token, _to, _amount);
     }
     emit DustSent(_to, _token, _amount);
   }

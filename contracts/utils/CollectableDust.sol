@@ -6,12 +6,13 @@ pragma solidity >=0.6.8;
 import '@openzeppelinV3/contracts/utils/Address.sol';
 import '@openzeppelinV3/contracts/utils/EnumerableSet.sol';
 import '@openzeppelinV3/contracts/token/ERC20/IERC20.sol';
+import "@openzeppelinV3/contracts/token/ERC20/SafeERC20.sol";
 
 import '../../interfaces/utils/ICollectableDust.sol';
-import "./TransferHelper.sol";
 
 abstract
 contract CollectableDust is ICollectableDust {
+  using SafeERC20 for IERC20;
   using EnumerableSet for EnumerableSet.AddressSet;
 
   address public constant ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -39,7 +40,7 @@ contract CollectableDust is ICollectableDust {
     if (_token == ETH_ADDRESS) {
       payable(_to).transfer(_amount);
     } else {
-      TransferHelper.safeTransfer(_token, _to, _amount);
+      IERC20(_token).safeTransfer(_to, _amount);
     }
     emit DustSent(_to, _token, _amount);
   }

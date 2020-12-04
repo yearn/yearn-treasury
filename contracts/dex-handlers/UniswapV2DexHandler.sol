@@ -6,7 +6,6 @@ import "@openzeppelinV3/contracts/math/SafeMath.sol";
 import '@openzeppelinV3/contracts/token/ERC20/SafeERC20.sol';
 
 import "./DexHandlerAbstract.sol";
-import "../utils/TransferHelper.sol";
 import "../../interfaces/dex/IUniswapV2Router.sol";
 /*
  * UniswapV2 Handler 
@@ -34,10 +33,10 @@ contract UniswapV2DexHandler is DexHandler { // TODO Add dust collection
     function customSwap(bytes memory _data, uint256 _amount) public returns (uint256 _amountOut) {
         (, uint256 _min, address[] memory _path,,) = customDecodeData(_data);
         // Transfer _in tokens to self
-        TransferHelper.safeTransferFrom(_path[0], msg.sender, address(this), _amount);
+        IERC20(_path[0]).safeTransferFrom(msg.sender, address(this), _amount);
 
-        TransferHelper.safeApprove(_path[0], address(uniswapV2Router), 0);
-        TransferHelper.safeApprove(_path[0], address(uniswapV2Router), _amount);
+        IERC20(_path[0]).safeApprove(address(uniswapV2Router), 0);
+        IERC20(_path[0]).safeApprove(address(uniswapV2Router), _amount);
 
         uint[] memory _amounts = uniswapV2Router.swapExactTokensForTokens(
             _amount,

@@ -7,7 +7,6 @@ import '@openzeppelinV3/contracts/token/ERC20/SafeERC20.sol';
 
 import "../../interfaces/dex-handlers/IDexHandler.sol";
 import "../../interfaces/swap/IGovernanceSwap.sol";
-import "../utils/TransferHelper.sol";
 
 /*
  * SafeSmartSwapAbstract
@@ -74,8 +73,8 @@ contract SafeSmartSwap {
     }
 
     function _approve(address _in, address _handler, uint256 _amount) internal {
-        TransferHelper.safeApprove(_in, _handler, 0);
-        TransferHelper.safeApprove(_in, _handler, _amount);
+        IERC20(_in).safeApprove(_handler, 0);
+        IERC20(_in).safeApprove(_handler, _amount);
     }
 
 }

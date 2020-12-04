@@ -10,14 +10,13 @@ import '@openzeppelinV3/contracts/utils/EnumerableSet.sol';
 import "../../interfaces/utils/IZapper.sol";
 import "../../interfaces/curve/ICurveRegistry.sol";
 
-import "../utils/TransferHelper.sol";
 import "../utils/UtilsReady.sol";
 import "../swap/SafeSmartSwapAbstract.sol";
 
 contract TreasuryZap is UtilsReady, SafeSmartSwap {
-    using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     // strategy constants
     address constant want = 0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e; // YFI
@@ -119,7 +118,7 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
 
     function _curveSwap(uint256 _amount, address _token, address want) internal returns (uint256 _amountOut) {
         // IERC20(_token).safeApprove(curve_zap_out, 0);
-        TransferHelper.safeApprove(_token, curve_zap_out, _amount);
+        IERC20(_token).safeApprove(curve_zap_out, _amount);
         // Why is this required? (we sould add any extra curve token to avoid having it treated as dust)
         // pool = CurveRegistry(curve_registry).get_pool_from_lp_token(_token);
         address _curvePool = curve_deposit[_token];

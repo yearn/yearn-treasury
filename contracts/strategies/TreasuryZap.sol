@@ -34,11 +34,9 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
     mapping(address => uint256) public lastSwapAt;
 
 
-
     constructor(address _governanceSwap) public UtilsReady() SafeSmartSwap(_governanceSwap) {
         addKeeper(msg.sender);
     }
-
 
     // Curve Tokens
     function addCurveToken(address _token, address _curveContract) public onlyGovernor {
@@ -96,8 +94,8 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
         }
         return balance.mul(blocks).div(period);
     }
-    
-    
+
+
     // Swaps
     function swap(address _token) external notPaused onlyKeeper returns (uint256 _amountOut) {
         uint256 _amount = getSpendage(_token);
@@ -136,50 +134,4 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
         // TODO Report swap with event
     }
 
-    // TODO 
-    /**
-        exit
-
-     */
-
-    // function swap(address token_in, address token_out, uint256 amount_in) public returns (uint256 amount_out) {
-    //     IERC20(token_in).safeTransferFrom(msg.sender, address(this), amount_in);
-    //     address pool_in = token_to_curve_pool(token_in);
-    //     if (pool_in != address(0)) {
-    //         amount_out = swap_curve(token_in, token_out, amount_in);
-    //     } else {
-    //         amount_out = swap_uniswap(token_in, token_out, amount_in);
-    //     }
-    // }
-
-
-    // function get_path(address token_in, address token_out) public returns (address[] memory path) {
-    //     bool is_weth = token_in == weth || token_out == weth;
-    //     address[] memory path = new address[](is_weth ? 2 : 3);
-    //     path[0] = token_in;
-    //     if (is_weth) {
-    //         path[1] = token_out;
-    //     } else {
-    //         path[1] = weth;
-    //         path[2] = token_out;
-    //     }
-    //     return path;
-    // }
-
-    // function swap_uniswap(address token_in, address token_out, uint256 amount_in) public returns (uint256 amount_out) {
-    //     if (token_in == token_out) return amount_in;
-    //     address[] memory path = get_path(token_in, token_out);
-    //     uint256 _uni = Uniswap(uniswap).getAmountsOut(amount_in, path)[path.length - 1];
-    //     uint256 _sushi = Uniswap(sushiswap).getAmountsOut(amount_in, path)[path.length - 1];
-    //     address router = _uni > _sushi ? uniswap : sushiswap;
-    //     if (IERC20(token_in).allowance(address(this), router) < amount_in)
-    //         IERC20(token_in).safeApprove(router, type(uint256).max);
-    //     return Uniswap(router).swapExactTokensForTokens(
-    //         amount_in,
-    //         0,
-    //         path,
-    //         msg.sender,
-    //         block.timestamp
-    //     )[path.length - 1];
-    // }
 }

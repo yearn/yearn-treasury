@@ -7,11 +7,11 @@ import "@openzeppelinV3/contracts/utils/Address.sol";
 import "@openzeppelinV3/contracts/token/ERC20/SafeERC20.sol";
 import '@openzeppelinV3/contracts/utils/EnumerableSet.sol';
 
-import "../../interfaces/utils/IZapper.sol";
-import "../../interfaces/curve/ICurveRegistry.sol";
+import "../interfaces/utils/IZapper.sol";
+import "../interfaces/curve/ICurveRegistry.sol";
 
-import "../utils/UtilsReady.sol";
-import "../swap/SafeSmartSwapAbstract.sol";
+import "./utils/UtilsReady.sol";
+import "./swap/SafeSmartSwapAbstract.sol";
 
 contract TreasuryZap is UtilsReady, SafeSmartSwap {
     using Address for address;

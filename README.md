@@ -3,7 +3,7 @@
 As the rewards address of v1 strategies, `TreasuryZap` receives a bunch of different tokens and it swaps them to YFI, trying to avoid slippage as much as possible by partially swappping the rewards and allowing the keepers to set custom routes via governance-swaps.
 
 
-- [governance-swaps](https://github.com/lbertenasco/safe-smart-swap): [`0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc`](https://etherscan.io/address/0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc#code)
+- [governance-swaps](https://github.com/lbertenasco/safe-smart-swap): [`0xCe65aab4CE2ec7C13c82437Bd57baFEB0a0791d4`](https://etherscan.io/address/0xCe65aab4CE2ec7C13c82437Bd57baFEB0a0791d4#code)
 
 ## run tests:
 

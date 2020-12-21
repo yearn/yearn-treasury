@@ -117,8 +117,6 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
     function _curveSwap(uint256 _amount, address _token, address want) internal returns (uint256 _amountOut) {
         // IERC20(_token).safeApprove(curve_zap_out, 0);
         IERC20(_token).safeApprove(curve_zap_out, _amount);
-        // Why is this required? (we sould add any extra curve token to avoid having it treated as dust)
-        // pool = CurveRegistry(curve_registry).get_pool_from_lp_token(_token);
         address _curvePool = curve_deposit[_token];
         _amountOut = Zapper(curve_zap_out).ZapOut(
             payable(address(this)),
@@ -131,7 +129,6 @@ contract TreasuryZap is UtilsReady, SafeSmartSwap {
 
     function _reportSwap(address _token, uint256 _amount, uint256 _amountOut) internal {
         lastSwapAt[_token] = block.number;
-        // TODO Report swap with event
     }
 
 }

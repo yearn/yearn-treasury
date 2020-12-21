@@ -43,13 +43,17 @@ tokens_out = {
 def shared_setup(fn_isolation):
     pass
 
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
+
 @pytest.fixture
 def swap_owner(accounts, web3):
     return accounts.at(web3.ens.resolve("lucho.eth"), force=True)
 
 @pytest.fixture
 def governance_swaps(interface, swap_owner):
-    return interface.IGovernanceSwap("0x220c33Bb71D3b6A6a6EA2036AbDb1C9449447afc", owner=swap_owner)
+    return interface.IGovernanceSwap("0xCe65aab4CE2ec7C13c82437Bd57baFEB0a0791d4", owner=swap_owner)
 
 @pytest.fixture
 def uniswap_handler(UniswapV2DexHandler, interface, governance_swaps, swap_owner):
@@ -99,10 +103,6 @@ def curve_token_in(interface, zap, weth, token_out, governance_swaps, sushiswap_
     zap.addCurveToken(curve_token_in, curve_pools_in[request.param])
     if curve_token_in == token_out:
         return curve_token_in
-    # setup governance swap default path
-    path = [curve_token_in, token_out] if curve_token_in == weth else [curve_token_in, weth, token_out]
-    defaultSwapData = sushiswap_handler.customSwapData(0, 0, path, whale, 0)
-    governance_swaps.setPairDefaults(curve_token_in, token_out, sushiswap_handler.dex(), defaultSwapData)
 
     return curve_token_in
 

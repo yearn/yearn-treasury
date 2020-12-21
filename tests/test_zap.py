@@ -1,6 +1,10 @@
 import pytest
 from conftest import tokens_in, curve_tokens_in, curve_pools_in
 
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
+
 def test_swap(whale, zap, interface, governance_swaps, token_in, token_out):
     if token_in == token_out:
         pytest.skip("same token")

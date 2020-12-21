@@ -3,6 +3,10 @@ from conftest import tokens_in, curve_tokens_in, curve_pools_in
 
 all_tokens_in = { **tokens_in, **curve_tokens_in } # merge both tokens
 
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
+
 def test_slippage(whale, zap, sushiswap_handler, interface, governance_swaps):
     token_out = yfi = interface.ERC20("0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e")
     usdc = interface.ERC20("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")

@@ -18,21 +18,39 @@ contract SafeSmartSwap {
 
     IGovernanceSwap public governanceSwap;
 
+    bool public governanceSwapStrict = true;
+
     constructor(address _governanceSwap) public {
         _setGovernanceSwap(_governanceSwap);
     }
 
     // Setter
     function _setGovernanceSwap(address _governanceSwap) internal {
+        require(IGovernanceSwap(_governanceSwap).isGovernanceSwap(), 'safe-smart-swap::set-governance-swap:is-not-governance-swap');
         governanceSwap = IGovernanceSwap(_governanceSwap);
-        require(governanceSwap.isGovernanceSwap(), 'safe-smart-swap::set-governance-swap:is-not-governance-swap');
+    }
+    function _setGovernanceSwapStrict(bool _strict) internal {
+        require(governanceSwapStrict != _strict, 'safe-smart-swap::set-governance-swap:strict:no-change');
+        governanceSwapStrict = _strict;
+    }
+
+    function _getAmountOut(uint256 _amount, address _in, address _out) internal view returns (uint _amountOut) {
+        address _defaultHandler = governanceSwap.getPairDefaultDexHandler(_in, _out, governanceSwapStrict);
+        bytes memory _defaultData = governanceSwap.getPairDefaultData(_in, _out, governanceSwapStrict);
+        return IDexHandler(_defaultHandler).getAmountOut(_defaultData, _amount);
+    }
+
+    function _getAmountOut(uint256 _amount, address _dex, bytes memory _data) internal view returns (uint _amountOut) {
+        address _handler = governanceSwap.getDexHandler(_dex, governanceSwapStrict);
+        return IDexHandler(_handler).getAmountOut(_data, _amount);
     }
 
     // Governance swap
     function _swap(uint256 _amount, address _in, address _out) internal returns (uint _amountOut) {
-        address _handler = governanceSwap.getPairDefaultDexHandler(_in, _out);
+
+        address _handler = governanceSwap.getPairDefaultDexHandler(_in, _out, governanceSwapStrict);
         require(_handler != address(0), 'no-default-handler');
-        bytes memory _data = governanceSwap.getPairDefaultData(_in, _out);
+        bytes memory _data = governanceSwap.getPairDefaultData(_in, _out, governanceSwapStrict);
 
         _approve(_in, _handler, _amount);
         return IDexHandler(_handler).swap(_data, _amount);
@@ -50,11 +68,11 @@ contract SafeSmartSwap {
         uint256 outBalancePreSwap = IERC20(_out).balanceOf(address(this));
 
         // Get governanceSwap amount for token pair
-        address _defaultHandler = governanceSwap.getPairDefaultDexHandler(_in, _out);
-        bytes memory _defaultData = governanceSwap.getPairDefaultData(_in, _out);
+        address _defaultHandler = governanceSwap.getPairDefaultDexHandler(_in, _out, governanceSwapStrict);
+        bytes memory _defaultData = governanceSwap.getPairDefaultData(_in, _out, governanceSwapStrict);
         uint256 _governanceAmountOut = IDexHandler(_defaultHandler).getAmountOut(_defaultData, _amount);
 
-        address _handler = governanceSwap.getDexHandler(_dex);
+        address _handler = governanceSwap.getDexHandler(_dex, governanceSwapStrict);
         require(_handler != address(0), 'no-handler-for-dex');
         
         _approve(_in, _handler, _amount);
